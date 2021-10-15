@@ -1,2 +1,2 @@
 # learngit test
-Creatiing a new branch is quick & simple.
+Creatiing a new branch is quick and simple.
