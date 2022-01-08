@@ -1,0 +1,139 @@
+digraph AEB{
+    ColorScheme[shape="record",
+    label="ColorScheme|
+    {Red : high risk | 
+    Yellow : lack of test |
+    Green: low risk |
+    Cyan: To Be Decided}|
+    Style|
+    {Solid : implemented|
+    dashed : not implemented|
+    dotted : debug & maintanence}"
+    ];
+    
+    subgraph cluster_AebController{
+        label="AEB Controller";
+        style=filled;
+        CAN0;
+        CAN1;
+        CAN2;
+        CAN3;
+        CAN4;
+        CAN5;
+        UART0;
+        UART1;
+        UART2;
+        UART4;
+        GPIOs;
+    }
+    subgraph cluster_DebugPC{
+        label="Windows PC";
+        color="green";
+        style=filled;
+        Ethernet;
+        USB2UART;
+        CANBox;
+    }
+
+    mmWaveRadar[color="cyan", style="filled"];
+    SonicRadar[color="yellow", style="filled"];
+    SignalVehicle[color="greenyellow", style="filled"];
+    BrakeLights[color="greenyellow", style="filled"];
+    EC200U[color="yellow", style="filled", label="EC200U|{4G|BT|GPS}", shape="record"];
+    MobilePhone[color="yellow", style="filled", label="(Android) Phone|{Config Param|Debug View}", shape="record"];
+
+    EC200U->UART0[label="Firmware OTA,
+    config param"
+    ];
+    UART0->EC200U[style="dashed", label="Vehicle Status"];
+    EC200U->Cloud[style="dashed"];
+
+    UART2->ext4GModule[label="Vehicle Status"];
+    ext4GModule->Cloud;
+    
+
+    MobilePhone->BlueTooth[label="config params:
+    AEB_WorkMode,
+    AEB_DistortionData, 
+    AEB_VechicleWidth, 
+    AEB_VechicleKeepdistance,
+    AEB_TTC1threshold, AEB_TTC2threshold, 
+    AEB_Sensitivity,
+    AEB_GearNum,
+    AEB_HMW1, AEB_HMW2"
+    ];
+    MobilePhone->EC200U[style="dashed"];
+    BlueTooth->UART4[label="config params"];
+    
+    CANBox->CAN1[label="config params", style="dotted"];
+    CAN0->CANBox[label="Vehicle info", style="dotted"];
+
+    mmWaveRadar->CAN1[style="dashed", label="x, y, z,
+    range, velocity, bearing,
+    doppler_bin, intensity,
+    "];
+    
+    SonicRadar->UART2[style="dashed",label="Company, \nUrader_work_stata, \ndistance"];
+    SonicRadar->CAN5[label="Company, \nUrader_work_stata, \ndistance"];
+
+    AbsSensor_or_Gearbox->SignalVehicle[label="speed, sin/pulse"];
+
+    SignalVehicle->GPIOs[label="speed, 
+    TurnLeft, TurnRight, 
+    Back, Stop"];
+    SignalVehicle->VehicleCAN[label="speed..."];
+
+    GPIOs->BrakeLights[label="stoplight+, stoplight-"];
+
+    UART1->USB2UART[style="dotted", label="Log Print"];
+    USB2UART->UART1[style="dotted", label="Firmware Update"];
+    StereoCamera->Ethernet[style="dotted", label="YUV\nobstacle_Basic_data\nobstacle_info\ncamera_data"];
+/*
+    obstacle_info[
+        label="<f0> obstacle_info|TrackNumber|W,H|RelativeSpeedZ,X|DistanceX,Y,Z|HMW|TTC|CIPV"
+        shape = "record"
+        ];
+    "obstacle_info":f0 -> StereoCamera;
+    */
+    StereoCamera->CAN0[label="obstacle_Basic_data:
+    ObstacleNumber, 
+    HMWAlarmThreshold, 
+    "];
+    StereoCamera->CAN0[label="obstacle_info:
+    TrackNumber,W,H,
+    RelativeSpeedZ,X,
+    DistanceX,Y,Z,
+    HMW,TTC,CIPV,
+    "];
+    StereoCamera->CAN0[label="camera_data:
+    LeftLDW, RightLDW, LDWSentivity,
+    Invalid, OffSound, ErrorCode,
+    HMWGrade, HMW, HMWEnable,
+    FCWLevel, AmbientLuminance, FCWStatus"];
+ 
+    CAN0->StereoCamera[label="speed,\n LeftFlagTemp,\n RightFlagTemp"];
+
+/*
+    stVehicleParas[
+        label="<f0> stVehicleParas|vehicle_speed|BrakeFlag|kongdangFlag|shoudBrakeFlag|fVehicleSpeed"
+        shape = "record"
+        ];
+    "stVehicleParas":f0 -> VehicleCAN;
+    */
+    VehicleCAN->CAN2[label="_VEHICLE_PARA: stVehicleParas,
+    vehicle_speed, fVehicleSpeed,
+    BrakeFlag, kongdangFlag, shoudBrakeFlag"];
+
+    Display[
+        color="greenyellow", style="filled", shape="record",
+        ];
+    CAN4->Display[label="FrontCameraStatus, MillimeterWaveRadarStatus, UltrasonicRadarStatus, 
+    ValveStatus, VehicleCANBusStatus, VehicleSpeedStatus, 
+    Module4GStatus, GPSStatus, 
+    AEBSTaskStatus, FCWTaskStatus, LDWTaskStatus, SSSTaskStatus, CMSTaskStatus, 
+    FCWLevel, LDW, HMWGrade, DigitalDisplay, HMWTime, LengthwaysRelativeSpeed, TTC, LengthwaysDistance, ObstacleType"];
+    Display->CAN4[label="isAEBTaskClose, \nisLDWTaskClose"];
+
+    ProportionalValve[color="green", style="filled"];
+    CAN3->ProportionalValve[label="m_pressure  = (uint16_t)(ret_pressure * 128.0);"];
+}
